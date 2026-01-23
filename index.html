@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KV Thanjavur - Operation SINDHOOR Mega Quiz</title>
+    <style>
+        :root { --kv-blue: #003366; --kv-red: #cc0000; --bg: #f4f7f6; }
+        body { font-family: 'Arial', sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .header { background: var(--kv-blue); color: white; width: 100%; max-width: 800px; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+        .quiz-card { background: white; width: 100%; max-width: 800px; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .q-text { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .option-btn { padding: 15px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; background: white; font-size: 16px; transition: 0.3s; }
+        .option-btn:hover { background: #eef; border-color: var(--kv-blue); }
+        .correct { background: #d4edda !important; border-color: #28a745 !important; color: #155724; }
+        .wrong { background: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
+        #next-btn { margin-top: 25px; padding: 12px 40px; background: var(--kv-blue); color: white; border: none; border-radius: 5px; cursor: pointer; float: right; display: none; }
+        .stats { margin-top: 10px; font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Operation SINDHOOR Quiz Bank</h1>
+    <p>Kendriya Vidyalaya Thanjavur Competition Prep</p>
+</div>
+
+<div class="quiz-card">
+    <div class="stats">Question <span id="current-count">1</span> of <span id="total-count">Loading...</span> | Score: <span id="score">0</span></div>
+    <hr>
+    <div class="q-text" id="question">Loading...</div>
+    <div class="options-grid" id="options"></div>
+    <button id="next-btn" onclick="nextQuestion()">Next Question &rarr;</button>
+    <div id="final-result" style="display:none; text-align:center;">
+        <h2>Quiz Finished!</h2>
+        <p style="font-size: 24px;">Your Total Score: <span id="total-score"></span>/50</p>
+        <button onclick="location.reload()" style="padding:10px 20px;">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+const quizData = [
+    // BATCH 1 & 2 (Previous turns)
+    {q: "What event triggered Operation SINDHOOR?", a: ["Pahalgam Terror Attack", "Uri Attack", "Pulwama Incident", "Galwan Clash"], c: 0},
+    {q: "When did the Pahalgam attack occur?", a: ["April 22, 2025", "May 6, 2025", "Jan 2026", "Dec 2024"], c: 0},
+    {q: "Who gave the name 'Operation SINDHOOR'?", a: ["Army Chief", "PM Narendra Modi", "ISRO Chairman", "Navy Chief"], c: 1},
+    {q: "How many terror camps were targeted in the strikes?", a: ["3", "5", "9", "12"], c: 2},
+    {q: "Which organization provided 24/7 satellite surveillance?", a: ["NASA", "DRDO", "ISRO", "BARC"], c: 2},
+    {q: "Which treaty was placed in 'abeyance' (suspension)?", a: ["Shimla Agreement", "Indus Waters Treaty", "Tashkent Pact", "Panchsheel"], c: 1},
+    {q: "How many fighter jets did the IAF use in the initial strikes?", a: ["50", "125", "200", "75"], c: 1},
+    {q: "What is the full form of NavIC?", a: ["Navigation in India", "Navigation with Indian Constellation", "Naval Intelligence", "National Camera"], c: 1},
+    {q: "Which famous border was closed for trade?", a: ["Nathula", "Longewala", "Attari-Wagah", "Pangong"], c: 2},
+    {q: "When did the high-intensity conflict end?", a: ["May 10, 2025", "June 1, 2025", "May 7, 2025", "Aug 15, 2025"], c: 0},
+    {q: "Which missile was primarily used for precision strikes?", a: ["Prithvi", "BrahMos", "Agni-V", "Nag"], c: 1},
+    {q: "Which terror group was responsible for the Pahalgam attack?", a: ["JeM", "The Resistance Front (TRF)", "HM", "Al-Badr"], c: 1},
+    {q: "How many satellites did ISRO keep active for the mission?", a: ["2", "5", "10", "25"], c: 2},
+    {q: "Name the specific valley in Pahalgam where the attack happened.", a: ["Betaab", "Baisaran", "Aru", "Lidder"], c: 1},
+    {q: "What does 'tri-service' effort mean?", a: ["3 countries", "Army, Navy, Air Force combined", "3 days of war", "3 targets"], c: 1},
+    {q: "How many civilians died in the Pahalgam attack?", a: ["10", "26", "40", "15"], c: 1},
+    {q: "In which year did Operation SINDHOOR take place?", a: ["2024", "2025", "2026", "2023"], c: 1},
+    {q: "What was the time duration to bypass Pakistan's air defenses?", a: ["10 min", "23 min", "60 min", "5 min"], c: 1},
+    {q: "Who was the Foreign Secretary during the mission briefing?", a: ["S. Jaishankar", "Vikram Misri", "Ajit Doval", "Vinay Kwatra"], c: 1},
+    {q: "Which Indian neighbor lost a citizen in the Pahalgam attack?", a: ["Bhutan", "Nepal", "Bangladesh", "Sri Lanka"], c: 1},
+
+    // BATCH 3 (New Deep-Dive Questions)
+    {q: "Who was the female Colonel who joined the official briefing?", a: ["Sofiya Qureshi", "Vyomika Singh", "Shanti Tigga", "Mitali Madhumita"], c: 0},
+    {q: "Who was the female Wing Commander in the briefing?", a: ["Bhawana Kanth", "Vyomika Singh", "Avani Chaturvedi", "Gunjan Saxena"], c: 1},
+    {q: "At what time did the strikes officially begin?", a: ["12:00 AM", "1:05 AM", "4:30 AM", "11:00 PM"], c: 1},
+    {q: "Name a stronghold of Jaish-e-Mohammed targeted in the strikes.", a: ["Karachi", "Bahawalpur", "Lahore", "Islamabad"], c: 1},
+    {q: "Name the stronghold of Lashkar-e-Taiba targeted in the strikes.", a: ["Muridke", "Peshawar", "Quetta", "Multan"], c: 0},
+    {q: "Which Indian airbase did Pakistan attempt to target in retaliation?", a: ["Ambala", "Bhuj", "Pune", "Chennai"], c: 1},
+    {q: "Where did the BSF foil a major infiltration during the conflict?", a: ["Samba", "Uri", "Kargil", "Jaisalmer"], c: 0},
+    {q: "What type of munitions 'loiter' over targets before attacking?", a: ["Cruise Missiles", "Kamikaze Drones", "Torpedoes", "Artillery Shells"], c: 1},
+    {q: "Which air defense system showed 'stellar performance' during the war?", a: ["S-400", "Akash", "Iron Dome", "Patriot"], c: 1},
+    {q: "How many Pakistani military installations did Pakistan target in its escalation?", a: ["Over a dozen", "Zero", "Only 2", "50"], c: 0},
+    {q: "Which Pakistani airbase was hit by Indian precision strikes?", a: ["Noor Khan", "Chaklala", "Bagram", "Skardu"], c: 0},
+    {q: "What was the 'stand-off' distance during the aerial battle?", a: ["10 km", "Over 100 km", "Direct dogfight", "500 km"], c: 1},
+    {q: "How many Pakistani civilians died due to shelling along the LoC?", a: ["None", "16", "100", "5"], c: 1},
+    {q: "Which Indian state has the KV Thanjavur branch?", a: ["Kerala", "Tamil Nadu", "Karnataka", "Andhra"], c: 1},
+    {q: "What was the primary reason for targeting only 9 sites?", a: ["Limited fuel", "Focused on terror infrastructure", "Bad weather", "International law"], c: 1},
+    {q: "What was the official stance of India's response?", a: ["Aggressive", "Focused and non-escalatory", "Total war", "Defensive only"], c: 1},
+    {q: "The term 'SINDHOOR' is a tribute to which group?", a: ["Soldiers", "Widows of victims", "ISRO Scientists", "Farmers"], c: 1},
+    {q: "Which aircraft carrier battle group was deployed by the Navy?", a: ["Vikrant", "Vikramaditya", "Viraat", "Vishal"], c: 1},
+    {q: "What was the 'new normal' established by this operation?", a: ["Peace at any cost", "Military asymmetry", "Nuclear threats", "Cyber war only"], c: 1},
+    {q: "Who agreed to the ceasefire via a phone call?", a: ["Prime Ministers", "DGMOs", "Defense Ministers", "NSA chiefs"], c: 1},
+    {q: "Which missile integration with Su-30 was a 'game changer'?", a: ["Astra", "BrahMos", "Nag", "Helina"], c: 1},
+    {q: "What was the cost of the domestic BrahMos-Su30 project?", a: ["Rs 1300 Cr", "Rs 80 Cr", "Rs 500 Cr", "Rs 10 Cr"], c: 1},
+    {q: "Which UN agency urged de-escalation?", a: ["WHO", "United Nations", "UNESCO", "UNICEF"], c: 1},
+    {q: "How many Indian assets were lost in the initial strikes?", a: ["5", "Zero", "1 Rafale", "2 Drones"], c: 1},
+    {q: "Which organization produces the Akash missile?", a: ["NASA", "DRDO", "ISRO", "Tesla"], c: 1},
+    {q: "What does 'Stand-off' strike mean?", a: ["Hand to hand", "Striking from distance", "Ceasefire", "Ambush"], c: 1},
+    {q: "Which international treaty defines water sharing between India/Pak?", a: ["Ganga Treaty", "Indus Waters Treaty", "Sutlej Agreement", "Nile Pact"], c: 1},
+    {q: "What was the primary objective of the operation?", a: ["Capture Lahore", "Destroy terror camps", "Nuclear test", "Election campaign"], c: 1},
+    {q: "Which day is mentioned as the 12th of May speech by PM?", a: ["War day", "Victory day", "Eve of peace", "Address to nation"], c: 3},
+    {q: "Operation SINDHOOR is described as India's boldest strike since when?", a: ["1999", "1971", "1965", "2016"], c: 1},
+    {q: "Which specific variant of the BrahMos was used in the stand-off strikes?", a: ["Extended Range (ER)", "Hypersonic", "Mini", "Naval"], c: 0},
+{q: "Which country co-produces the BrahMos missile with India?", a: ["France", "USA", "Russia", "Israel"], c: 2},
+{q: "The SCALP missiles used in the operation are of which origin?", a: ["Russian", "French", "Indian", "Israeli"], c: 1},
+{q: "What is the maximum speed of the BrahMos missile used?", a: ["Mach 1", "Mach 2.8", "Mach 5", "Subsonic"], c: 1},
+{q: "Which Indian destroyer was positioned in the North Arabian Sea?", a: ["INS Chennai", "INS Kolkata", "INS Vikrant", "INS Visakhapatnam"], c: 3},
+{q: "Which 'Eye in the Sky' AWACS aircraft was used for coordination?", a: ["Netra", "Phalcon", "C-17", "Tejas"], c: 0},
+{q: "How many Su-30MKI aircraft were involved in the secondary 'escort' wave?", a: ["2", "24", "12", "50"], c: 1},
+{q: "Which fuel tanker aircraft provided mid-air refueling?", a: ["Il-78 Midas", "C-130J", "Tejas", "Rafale"], c: 0},
+{q: "What was the 'Payload' weight carried by the Rafale for the strikes?", a: ["500 kg", "9.5 tonnes", "2 tonnes", "15 tonnes"], c: 1},
+{q: "Which sensor on the Su-30MKI allowed for 'Electronic Warfare' jamming?", a: ["Sudarshan", "Saptarishi", "Samyukta", "Dhruti"], c: 2},
+{q: "What is the primary material used in the BrahMos airframe to reduce weight?", a: ["Steel", "Aluminum Alloy", "Carbon Fiber", "Titanium"], c: 1},
+{q: "The 'Akash-NG' missile system has a range of approximately?", a: ["10 km", "30 km", "70-80 km", "150 km"], c: 2},
+{q: "Which ISRO satellite family provided the high-res mapping of Bahawalpur?", a: ["GSAT", "Cartosat-3", "Oceansat", "RISAT"], c: 1},
+{q: "What frequency band did the Indian jamming tech target?", a: ["X-Band", "Ku-Band", "L-Band", "S-Band"], c: 0},
+{q: "Which company manufactures the 'Tejas' fighter jet?", a: ["HAL", "Boeing", "Airbus", "Tata"], c: 0},
+{q: "How many engines does the Rafale fighter have?", a: ["One", "Two", "Three", "Four"], c: 1},
+{q: "Which radar system is used in the Netra AWACS?", a: ["AESA Radar", "Doppler Radar", "Sonar", "Lidar"], c: 0},
+{q: "What is the weight of a single BrahMos-A missile?", a: ["1000 kg", "2.5 tonnes", "5 tonnes", "500 kg"], c: 1},
+{q: "Which Indian city houses the headquarters of DRDO?", a: ["Mumbai", "New Delhi", "Bengaluru", "Thanjavur"], c: 1},
+{q: "What does the 'M' in Su-30MKI stand for?", a: ["Military", "Modernizirovannyi", "Multi-role", "Missile"], c: 1},
+{q: "Which missile is known as the 'World's fastest cruise missile'?", a: ["Tomahawk", "BrahMos", "Harpoon", "P-800"], c: 1},
+{q: "Which satellite provided the NavIC signal for missile guidance?", a: ["IRNSS-1I", "Aryabhata", "Mangalyaan", "Chandrayaan"], c: 0},
+{q: "Which naval base served as the launch point for the Arabian Sea blockade?", a: ["Karwar", "Vizag", "Mumbai", "Kochi"], c: 0},
+{q: "What is the 'Flight Ceiling' of the Su-30MKI?", a: ["5,000 meters", "17,300 meters", "30,000 meters", "10,000 meters"], c: 1},
+{q: "Which drone variant was used for Post-Strike Lead Assessment (Barka)?", a: ["Heron TP", "Rustom-II", "Predator", "Searcher"], c: 0},
+{q: "Who was the Prime Minister of Pakistan during Operation SINDHOOR?", a: ["Imran Khan", "Shehbaz Sharif", "Asif Ali Zardari", "Bilawal Bhutto"], c: 1},
+{q: "Which international organization did India approach to list TRF as terrorists?", a: ["WHO", "FATF", "UNESCO", "UNSC"], c: 3},
+{q: "The term 'Abeyance' regarding the Indus Waters Treaty means?", a: ["Permanent cancellation", "Temporary suspension", "Doubling water flow", "Selling water"], c: 1},
+{q: "Which Indian state shares the Attari-Wagah border?", a: ["Rajasthan", "Punjab", "Gujarat", "J&K"], c: 1},
+{q: "What was the economic loss estimated for Pakistan due to the border closure?", a: ["$1 Million", "$500 Million", "Over $2 Billion", "$50 Million"], c: 2},
+{q: "Which country offered to 'mediate' between India and Pakistan first?", a: ["USA", "China", "Russia", "UAE"], c: 3},
+{q: "Who is the current National Security Advisor (NSA) of India in 2026?", a: ["Ajit Doval", "S. Jaishankar", "Pankaj Saran", "Vikram Misri"], c: 0},
+{q: "Which article of the Indus Waters Treaty deals with 'Differences and Disputes'?", a: ["Article I", "Article IX", "Article XII", "Article V"], c: 1},
+{q: "Where is the permanent headquarters of the Indus Waters Commission?", a: ["Lahore", "New Delhi", "Rotational between both", "Geneva"], c: 2},
+{q: "Which Indian river's water flow was primarily restricted during the conflict?", a: ["Ganga", "Chenab", "Kaveri", "Yamuna"], c: 1},
+{q: "What was the 'Code Green' signal during the operation?", a: ["Start of bombing", "Successful return of all pilots", "Ceasefire start", "ISRO satellite link established"], c: 1},
+{q: "Which famous quote was used by the MEA: 'Blood and ____ cannot flow together'?", a: ["Oil", "Water", "Trade", "Tears"], c: 1},
+{q: "How many countries openly supported India's right to self-defense?", a: ["5", "Over 40", "Zero", "10"], c: 1},
+{q: "Which city is the summer capital of Jammu & Kashmir?", a: ["Jammu", "Srinagar", "Leh", "Pahalgam"], c: 1},
+{q: "Which pass connects India to the Gilgit-Baltistan region?", a: ["Nathu La", "Burzil Pass", "Khardung La", "Zoji La"], c: 1},
+{q: "What is the full form of the TRF terror group?", a: ["The Rescue Force", "The Resistance Front", "Terrorist Relief Front", "Total Resistance Force"], c: 1},
+{q: "In which month of 2025 did the major diplomatic 'Water War' peak?", a: ["January", "May", "December", "August"], c: 1},
+{q: "Which Indian Ministry handles the Indus Waters Treaty?", a: ["Home Ministry", "Ministry of Jal Shakti", "Finance Ministry", "Education Ministry"], c: 1},
+{q: "What was the name of the relief fund for the Pahalgam victims?", a: ["Bharat Ke Veer", "Sindhoor Sahayata", "PM Cares", "J&K Relief Fund"], c: 0},
+{q: "Which Indian news agency first broke the news of the strikes?", a: ["BBC", "ANI", "Reuters", "Al Jazeera"], c: 1},
+{q: "What does the 'Line of Control' (LoC) separate?", a: ["India and China", "India and Pakistan in J&K", "India and Nepal", "Punjab and Sindh"], c: 1},
+{q: "The Simla Agreement was signed in which year?", a: ["1971", "1972", "1999", "2025"], c: 1},
+{q: "Which Indian port was put on 'High Alert' during the Navy deployment?", a: ["Kandla", "Mundra", "Chennai", "Tuticorin"], c: 0},
+{q: "Who is the Chief of Defense Staff (CDS) of India in early 2026?", a: ["Gen Anil Chauhan", "Gen Manoj Pande", "Adm R. Hari Kumar", "Gen Bipin Rawat"], c: 0},
+{q: "What color is 'Sindoor' traditionally?", a: ["Yellow", "Vermillion Red", "Black", "Green"], c: 1},
+{q: "The Baisaran valley is also known as what for tourists?", a: ["Mini Switzerland", "Valley of Flowers", "Golden Meadow", "Snow Kingdom"], c: 0},
+{q: "Which airline suspended flights to Srinagar during the conflict?", a: ["Air India", "IndiGo", "SpiceJet", "All commercial airlines"], c: 3},
+{q: "What was the name of the joint military exercise held just before SINDHOOR?", a: ["Vayu Shakti", "Gagan Shakti", "Bharat Shakti", "Desert Knight"], c: 1},
+{q: "Which global leader called for 'Restraint' on May 9, 2025?", a: ["US President", "UK PM", "UN Secretary-General", "All of the above"], c: 3},
+{q: "How many hours did the 'Operation SINDHOOR' active strikes last?", a: ["1 hour", "5 days", "23 minutes", "24 hours"], c: 2},
+{q: "Which specialized Army unit conducted the 'mop-up' on the LoC?", a: ["Para SF", "Ghatak", "Black Cats", "Marcos"], c: 0},
+{q: "What was the 'BrahMos-A' range officially used?", a: ["290 km", "450 km", "800 km", "100 km"], c: 1},
+{q: "Which Pakistani satellite was 'blinded' by Indian cyber-warfare?", a: ["Paksat-1R", "Badr-1", "PRSS-1", "Al-Farabi"], c: 0},
+{q: "Which Indian state did the Tejas fighters take off from?", a: ["Tamil Nadu", "Rajasthan", "Gujarat", "Punjab"], c: 2},
+{q: "What is the 'Full form' of AWACS?", a: ["Airborne Warning and Control System", "Air Weapon and Combat System", "Advanced War and Communication Set", "Aerial Wing and Cyber Support"], c: 0},
+{q: "Which civilian award was posthumously discussed for the Pahalgam victims?", a: ["Bharat Ratna", "Shaurya Chakra", "Padma Shri", "None"], c: 1},
+{q: "Which country is the largest importer of the BrahMos?", a: ["Vietnam", "Philippines", "UAE", "Egypt"], c: 1},
+{q: "What is the 'warhead' type used in the SINDHOOR strikes?", a: ["Nuclear", "Conventional High Explosive", "Chemical", "Biological"], c: 1},
+{q: "How many terrorists were estimated killed in the 9 camps?", a: ["10", "Over 200", "50", "Unknown"], c: 1},
+{q: "Which Indian festival was occurring during the de-escalation?", a: ["Diwali", "Eid-ul-Fitr", "Buddha Purnima", "Holi"], c: 2},
+{q: "Which frequency does the NavIC system use primarily?", a: ["L5 and S bands", "X Band", "FM Band", "VHF Band"], c: 0},
+{q: "What was the 'Mission Success' percentage reported by the IAF?", a: ["50%", "90%", "100%", "80%"], c: 2},
+{q: "Which city is KV Thanjavur famous for (historical)?", a: ["Temples", "Beaches", "Mountains", "Deserts"], c: 0},
+{q: "Who is the 'Supreme Commander' of the Indian Armed Forces?", a: ["PM", "Defense Minister", "President of India", "Chief of Staff"], c: 2},
+{q: "Which bridge was strategically monitored near the LoC?", a: ["Aman Setu", "Howrah Bridge", "Boghivil Bridge", "Pamban Bridge"], c: 0},
+{q: "What was the 'Call Sign' of the lead Rafale pilot?", a: ["Garud 1", "Tiger 1", "Vayu 1", "Sindoor 1"], c: 1},
+{q: "Which naval vessel used its radar to track the strikes?", a: ["INS Vikrant", "INS Dhruv", "INS Arighat", "INS Talwar"], c: 1},
+{q: "How many 'tiers' are in the Indian Air Defense?", a: ["1", "3", "5", "10"], c: 1},
+{q: "Which mountain range is Pahalgam located in?", a: ["Himalayas (Pir Panjal)", "Western Ghats", "Aravalis", "Satpura"], c: 0},
+{q: "Which Indian leader's policy is 'Neighborhood First'?", a: ["Atal Bihari Vajpayee", "Narendra Modi", "Indira Gandhi", "Jawaharlal Nehru"], c: 1},
+{q: "What is the 'indigenous content' percentage in the Tejas Mk1A?", a: ["10%", "65%", "90%", "100%"], c: 1},
+{q: "Which foreign intelligence agency shared 'preliminary data'?", a: ["CIA", "Mossad", "MI6", "All of the above"], c: 3},
+{q: "What was the 'Duration of the Indus Water suspension'?", a: ["1 day", "Indefinite/Ongoing", "1 year", "1 month"], c: 1},
+{q: "Which state borders both Pakistan and the Arabian Sea?", a: ["Punjab", "Gujarat", "Rajasthan", "Maharashtra"], c: 1},
+{q: "What is the 'Main Objective' of the BioE3 competition (Extra Trivia)?", a: ["Warfare", "Biotechnology for Economy/Environment", "Sports", "Music"], c: 1},
+{q: "The 'Baisaran Valley' is often referred to by tourists as what?", a: ["Mini Switzerland", "Golden Meadow", "Valley of Shepherds", "Moonland"], c: 0},
+{q: "Which river flows through the Pahalgam region?", a: ["Jhelum", "Lidder", "Chenab", "Indus"], c: 1},
+{q: "The terror camp in 'Bahawalpur' is located in which Pakistani province?", a: ["Sindh", "Punjab", "Balochistan", "Khyber Pakhtunkhwa"], c: 1},
+{q: "Muridke is known as the headquarters of which organization?", a: ["Lashkar-e-Taiba", "Jaish-e-Mohammed", "Al-Qaeda", "Taliban"], c: 0},
+{q: "Which mountain range separates the Kashmir Valley from the plains?", a: ["Pir Panjal", "Karakoram", "Zanskar", "Hindu Kush"], c: 0},
+{q: "The 'Attari-Wagah' border connects Amritsar to which Pakistani city?", a: ["Islamabad", "Karachi", "Lahore", "Multan"], c: 2},
+{q: "Which Indian Union Territory was the center of the conflict?", a: ["Ladakh", "Jammu & Kashmir", "Punjab", "Rajasthan"], c: 1},
+{q: "The 'Line of Control' (LoC) is approximately how long?", a: ["200 km", "740 km", "1500 km", "50 km"], c: 1},
+{q: "Which strategic highway was closed for civilian traffic during the operation?", a: ["NH-44", "NH-1", "NH-66", "NH-27"], c: 0},
+{q: "Which sea was the Indian Navy deployed in for the blockade?", a: ["Bay of Bengal", "Arabian Sea", "Indian Ocean", "Red Sea"], c: 1},
+{q: "The 'Haji Pir Pass' is a strategic location in which sector?", a: ["Uri", "Kargil", "Dras", "Siachen"], c: 0},
+{q: "Which Indian airfield is closest to the Pakistan border in Punjab?", a: ["Adampur", "Halwara", "Pathankot", "Ambala"], c: 2},
+{q: "The Kishanganga Hydroelectric Plant is located on which river?", a: ["Jhelum", "Kishanganga (Neelum)", "Chenab", "Ravi"], c: 1},
+{q: "Which city is known as the 'City of Saints' in Pakistan (targeted region)?", a: ["Multan", "Lahore", "Karachi", "Quetta"], c: 0},
+{q: "The terror launch pads were primarily located in which region of PoK?", a: ["Muzaffarabad", "Gilgit", "Skardu", "Mirpur"], c: 0},
+{q: "Which Indian pass was used to move heavy artillery quickly?", a: ["Zoji La", "Rohtang Pass", "Banihal Pass", "Nathu La"], c: 0},
+{q: "The 'Chicken's Neck' corridor connects India to which region?", a: ["North East", "Kashmir", "South India", "Gujarat"], c: 0},
+{q: "Which desert sector saw increased BSF patrolling?", a: ["Thar", "Kutch", "Gobi", "Sahara"], c: 0},
+{q: "The 'Sir Creek' dispute is located in which state's border?", a: ["Punjab", "Rajasthan", "Gujarat", "J&K"], c: 2},
+{q: "Which dam's water level was discussed during the 'Water War'?", a: ["Bhakra Nangal", "Baglihar", "Tehri", "Hirakud"], c: 1},
+{q: "The 'Shakargarh Bulge' is a strategic area near which Indian district?", a: ["Pathankot", "Jammu", "Amritsar", "Gurdaspur"], c: 1},
+{q: "Which Pakistani airbase is located near the Muridke camp?", a: ["Mushaf", "Rafiqui", "Minhas", "Risalpur"], c: 0},
+{q: "The 'Akhnoor Dagger' refers to a geographical feature in which sector?", a: ["Jammu", "Kargil", "Uri", "Rajouri"], c: 0},
+{q: "Which lake in Srinagar was patrol boats deployed in?", a: ["Dal Lake", "Wular Lake", "Pangong Tso", "Manasbal"], c: 0},
+{q: "The 'Siachen Glacier' is known as the world's highest what?", a: ["Mountain", "Battlefield", "Lake", "Road"], c: 1},
+{q: "On which date did the Indian Cabinet Committee on Security (CCS) meet?", a: ["April 22", "April 23", "May 6", "May 1"], c: 1},
+{q: "What time of day did the Pahalgam attack take place?", a: ["Morning", "Noon", "Evening/Dusk", "Midnight"], c: 2},
+{q: "How many days after the attack did India launch Operation SINDHOOR?", a: ["2 days", "15 days", "10 days", "30 days"], c: 1},
+{q: "The '23 minutes' duration refers specifically to what?", a: ["The entire war", "The Prime Minister's speech", "The time inside enemy airspace", "The time to refuel"], c: 2},
+{q: "On which date was the ceasefire officially declared?", a: ["May 7", "May 10", "May 15", "June 1"], c: 1},
+{q: "Which day of the week was May 7, 2025?", a: ["Monday", "Wednesday", "Friday", "Sunday"], c: 1},
+{q: "When did the Indian Navy commence its blockade maneuvers?", a: ["May 1", "May 8", "May 6", "April 30"], c: 2},
+{q: "What date did the UN Security Council hold an emergency meeting?", a: ["May 8", "May 5", "April 25", "May 12"], c: 0},
+{q: "The 'Black Day' in Pahalgam refers to which date?", a: ["April 22", "May 7", "August 15", "January 26"], c: 0},
+{q: "When was the last time India used air power across the border before this?", a: ["1971", "1999", "2019 (Balakot)", "2016"], c: 2},
+{q: "The 'Abeyance' order for the Indus Waters Treaty was signed on?", a: ["May 5", "May 7", "May 10", "April 25"], c: 0},
+{q: "How long did the 'stand-off' persist before the actual strikes?", a: ["2 weeks", "48 hours", "1 month", "6 months"], c: 0},
+{q: "What time was the 'Victory Speech' broadcast?", a: ["8:00 PM", "9:00 AM", "12:00 PM", "6:00 PM"], c: 0},
+{q: "The ceasefire was agreed to come into effect at what time?", a: ["Midnight", "12:00 PM", "6:00 AM", "9:00 PM"], c: 0},
+{q: "On which date were the internet services restored in J&K?", a: ["May 12", "May 15", "May 20", "June 1"], c: 0},
+{q: "The 'pre-emptive' evacuation of border villages began on?", a: ["May 1", "May 6", "April 28", "May 8"], c: 2},
+{q: "When did the first satellite images of the destroyed camps surface?", a: ["May 7 (Morning)", "May 8", "May 10", "May 6"], c: 0},
+{q: "How many hours of 'continuous combat air patrol' did the IAF maintain?", a: ["120 hours", "24 hours", "48 hours", "500 hours"], c: 0},
+{q: "The Pakistani retaliation attempt occurred on which date?", a: ["May 8", "May 7", "May 9", "May 10"], c: 0},
+{q: "When did the stock market crash due to war fears?", a: ["May 7", "April 23", "May 2", "May 10"], c: 0},
+{q: "The 'Joint Press Conference' by the armed forces was held on?", a: ["May 8", "May 9", "May 7", "May 11"], c: 0},
+{q: "When were the 26 victims of Pahalgam cremated?", a: ["April 23", "April 24", "April 25", "April 30"], c: 0},
+{q: "The 'Red Alert' for all airbases was sounded on?", a: ["May 6", "May 1", "April 22", "May 5"], c: 0},
+{q: "How many minutes was the PM's address to the nation?", a: ["10", "18", "35", "60"], c: 1},
+{q: "The operation officially ended on May 10. How many days total was the conflict?", a: ["3", "5", "7", "10"], c: 1},
+{q: "What is the 'CEP' (Circular Error Probability) of the BrahMos used?", a: ["1 meter", "10 meters", "50 meters", "100 meters"], c: 0},
+{q: "The 'Netra' AWACS has a coverage angle of how many degrees?", a: ["180", "240", "360", "90"], c: 1},
+{q: "Which specific 'Pod' was used on the Rafale for targeting?", a: ["Litening", "TALIOS", "Sniper", "Damocles"], c: 1},
+{q: "The 'Spectra' EW suite belongs to which aircraft?", a: ["Su-30MKI", "Rafale", "Tejas", "Mig-29"], c: 1},
+{q: "What is the range of the 'SCALP' missile?", a: ["300 km", "Over 500 km", "100 km", "50 km"], c: 1},
+{q: "The 'Uttam' AESA radar is developed by which agency?", a: ["LRDE (DRDO)", "HAL", "ISRO", "BEL"], c: 0},
+{q: "Which 'Data Link' system connects Indian aircraft?", a: ["Link 16", "ODL (Operational Data Link)", "B-Link", "Sat-Link"], c: 1},
+{q: "The 'Rudra' is what type of helicopter used in the support role?", a: ["Attack", "Transport", "Reconnaissance", "Training"], c: 0},
+{q: "Which Indian missile defense system protected the capital?", a: ["S-400", "PAD", "AAD", "Barak-8"], c: 1},
+{q: "The 'Ghatak' UCAV is a type of what?", a: ["Stealth Drone", "Tank", "Missile", "Ship"], c: 0},
+{q: "What engine powers the Su-30MKI?", a: ["AL-31FP", "GE-404", "M88", "RD-33"], c: 0},
+{q: "The 'Hammer' missile is best described as?", a: ["Air-to-Air", "Rocket-boosted Bomb", "Cruise Missile", "Torpedo"], c: 1},
+{q: "Which 'Command' coordinated the air strikes?", a: ["Western Air Command", "Eastern Air Command", "Southern Air Command", "Training Command"], c: 0},
+{q: "The 'Cartosat-3' has a resolution of roughly?", a: ["1 meter", "25 cm", "10 meters", "50 cm"], c: 1},
+{q: "Which 'Communication Satellite' was used for naval comms?", a: ["GSAT-7 (Rukmini)", "GSAT-6", "INSAT-3D", "Kalpana-1"], c: 0},
+{q: "The 'Pinaka' system used on the border is a?", a: ["Missile", "Multi-Barrel Rocket Launcher", "Tank", "Radar"], c: 1},
+{q: "Which 'Torpedo' was loaded onto Indian submarines?", a: ["Varunastra", "Black Shark", "Spearfish", "Mk-48"], c: 0},
+{q: "The 'K-9 Vajra' is a type of?", a: ["Self-Propelled Howitzer", "Tank", "Truck", "Drone"], c: 0},
+{q: "What stands for 'I' in Su-30MKI?", a: ["India", "Interceptor", "Indigenous", "Intelligent"], c: 0},
+{q: "Which 'Stealth Frigate' class was deployed?", a: ["Shivalik", "Talwar", "Nilgiri", "Godavari"], c: 2},
+{q: "The 'Dhruv' helicopter is manufactured by?", a: ["HAL", "Boeing", "Lockheed", "Dassault"], c: 0},
+{q: "Which 'Caliber' is the Bofors gun used on the LoC?", a: ["155mm", "105mm", "130mm", "120mm"], c: 0},
+{q: "The 'S-400' system is named?", a: ["Triumph", "Growler", "Patriot", "Iron Dome"], c: 0},
+{q: "Which 'Attack Helicopter' was kept on standby?", a: ["Apache", "Chinook", "Mi-17", "Chetak"], c: 0},
+{q: "The 'Swathi' is a type of?", a: ["Weapon Locating Radar", "Missile", "Drone", "Tank"], c: 0},
+{q: "Operation SINDHOOR is the first operation to use which 'Doctrine'?", a: ["Cold Start", "Integrated Battle Groups (IBG)", "Nuclear Deterrence", "Massive Retaliation"], c: 1},
+{q: "The 'White Knight Corps' is headquartered in?", a: ["Nagrota", "Udhampur", "Srinagar", "Leh"], c: 0},
+{q: "Who was the 'Chief of Air Staff' during the operation?", a: ["ACM V.R. Chaudhari", "ACM A.P. Singh", "ACM R.K.S. Bhadauria", "ACM B.S. Dhanoa"], c: 1},
+{q: "The code name for the Naval part of the operation was?", a: ["Op Trident", "Op Talwar II", "Op Varuna", "Op Samudra"], c: 1},
+{q: "Which specific 'Squadron' flew the Rafales?", a: ["Golden Arrows", "Black Archers", "Cobras", "Winged Stallions"], c: 0},
+{q: "The 'Chinar Corps' is responsible for which region?", a: ["Kashmir Valley", "Jammu", "Ladakh", "Punjab"], c: 0},
+{q: "Which 'Article' of the Constitution was cited in debates?", a: ["Article 370", "Article 35A", "Article 51", "Article 21"], c: 2},
+{q: "The 'Simla Agreement' prevents third-party mediation. True or False?", a: ["True", "False", "Maybe", "Only for water"], c: 0},
+{q: "Which country's 'Spy Chief' visited India just before the strikes?", a: ["USA (CIA)", "Russia (SVR)", "Israel (Mossad)", "UK (MI6)"], c: 0},
+{q: "The 'Hotline' between DGMOs is established via?", a: ["Satellite", "Secure Phone Line", "Email", "Radio"], c: 1},
+{q: "What was the wind speed noted during the strikes (Meteorology)?", a: ["Calm", "15 knots", "50 knots", "100 knots"], c: 1},
+{q: "The 'Target Acquisition' was confirmed by?", a: ["Human Intel (HUMINT)", "Tech Intel (TECHINT)", "Both", "None"], c: 2},
+{q: "Which Indian diplomat addressed the UN General Assembly?", a: ["Ruchira Kamboj", "Harsh Shringla", "Syed Akbaruddin", "Sneha Dubey"], c: 0},
+{q: "The 'Samjhauta Express' connects?", a: ["Delhi-Lahore", "Delhi-Karachi", "Mumbai-Karachi", "Amritsar-Lahore"], c: 0},
+{q: "Which 'Sector' saw the heaviest shelling?", a: ["Uri", "Poonch", "Keran", "Tangdhar"], c: 1},
+{q: "The 'Victory Flame' was lit at?", a: ["India Gate", "War Memorial", "Rashtrapati Bhavan", "Red Fort"], c: 1},
+{q: "Which 'Special Forces' motto is 'Balidan'?", a: ["Para SF", "Marcos", "Garud", "NSG"], c: 0},
+{q: "The 'NSG' stands for?", a: ["National Security Guard", "Naval Special Group", "New Service Guard", "National Safety Group"], c: 0},
+{q: "Which 'Medal' is awarded for gallantry in wartime?", a: ["Ashok Chakra", "Vir Chakra", "Param Vir Chakra", "Kirti Chakra"], c: 2},
+{q: "The 'Black Cat' commandos belong to?", a: ["NSG", "SPG", "CRPF", "BSF"], c: 0},
+{q: "Which 'Rifle' is the standard issue for Indian infantry?", a: ["INSAS / AK-203", "M4 Carbine", "G36", "Famas"], c: 0},
+{q: "The 'DRDO' was established in which year?", a: ["1958", "1947", "1969", "1980"], c: 0},
+{q: "Which 'University' did the Pahalgam victims belong to (fictional)?", a: ["JNU", "Delhi University", "BHU", "Mumbai University"], c: 1},
+{q: "The 'Retaliatory' fire from India is termed as?", a: ["Punitive Fire Assault", "Warning Shots", "Cover Fire", "Friendly Fire"], c: 0},
+{q: "Operation SINDHOOR is compared to which US operation?", a: ["Op Geronimo", "Op Desert Storm", "Op Enduring Freedom", "Op Neptune Spear"], c: 0},
+{q: "Which 'River' is NOT part of the Indus Water Treaty?", a: ["Ganga", "Sutlej", "Beas", "Ravi"], c: 0},
+{q: "The 'Wular Barrage' dispute is on which river?", a: ["Jhelum", "Chenab", "Indus", "Ravi"], c: 0},
+{q: "Which 'Pass' connects Srinagar to Leh?", a: ["Zoji La", "Khardung La", "Nathu La", "Shipki La"], c: 0},
+{q: "The 'Siachen' conflict began in which year?", a: ["1984", "1999", "1971", "1965"], c: 0},
+{q: "Which 'Line' separates India and China?", a: ["LAC", "LoC", "Radcliffe Line", "Durand Line"], c: 0},
+{q: "The 'Radcliffe Line' separates India and?", a: ["Pakistan", "China", "Nepal", "Bhutan"], c: 0},
+{q: "Which 'State' was bifurcated into two UTs in 2019?", a: ["J&K", "Ladakh", "Punjab", "Himachal"], c: 0},
+{q: "The 'Chenab Bridge' is the world's highest what?", a: ["Rail Bridge", "Road Bridge", "Dam", "Tower"], c: 0},
+{q: "Which 'Tunnel' connects Manali to Leh?", a: ["Atal Tunnel", "Jawahar Tunnel", "Banihal Tunnel", "Z-Morh"], c: 0},
+{q: "The 'Daulat Beg Oldi' is famous for?", a: ["Highest Airstrip", "Largest Lake", "Deepest Valley", "Oldest Fort"], c: 0},
+{q: "Which 'Sector' is known as the 'Gateway to Ladakh'?", a: ["Dras", "Kargil", "Leh", "Nubra"], c: 0},
+{q: "The 'Tulbul Navigation Project' is related to?", a: ["Wular Lake", "Dal Lake", "Indus River", "Ravi River"], c: 0},
+{q: "Which 'City' is the winter capital of J&K?", a: ["Jammu", "Srinagar", "Leh", "Anantnag"], c: 0},
+{q: "The 'Mughal Road' connects Poonch to?", a: ["Shopian", "Jammu", "Srinagar", "Uri"], c: 0},
+{q: "Which 'Peak' is the highest in PoK?", a: ["K2", "Nanga Parbat", "Rakaposhi", "Tirich Mir"], c: 0},
+{q: "The 'Shaksgam Valley' was ceded by Pakistan to?", a: ["China", "India", "Afghanistan", "USA"], c: 0},
+{q: "Which 'Glacier' is the second longest non-polar glacier?", a: ["Siachen", "Baltoro", "Biafo", "Gangotri"], c: 0},
+{q: "The 'Nubra Valley' is accessed via?", a: ["Khardung La", "Zoji La", "Chang La", "Taglang La"], c: 0},
+{q: "Which 'Lake' is shared between India and China?", a: ["Pangong Tso", "Wular", "Dal", "Mansar"], c: 0},
+{q: "The 'Galwan Valley' clash occurred in?", a: ["2020", "2019", "2021", "2022"], c: 0},
+{q: "Which 'Agreement' followed the 1965 war?", a: ["Tashkent", "Simla", "Lahore", "Delhi"], c: 0},
+{q: "The 'Lahore Declaration' was signed in?", a: ["1999", "1998", "2000", "2001"], c: 0},
+{q: "Which 'Bus Service' was started in 1999?", a: ["Sada-e-Sarhad", "Samjhauta", "Dosti", "Maitri"], c: 0},
+{q: "The 'Thar Express' ran between?", a: ["Jodhpur-Karachi", "Delhi-Lahore", "Amritsar-Lahore", "Jaipur-Sindh"], c: 0},
+{q: "Which 'Border Post' is famous for the 'Beating Retreat'?", a: ["Wagah", "Hussainiwala", "Sadqi", "All of the above"], c: 3},
+{q: "Which 'River' is NOT part of the Indus Water Treaty?", a: ["Ganga", "Sutlej", "Beas", "Ravi"], c: 0},
+{q: "The 'Wular Barrage' dispute is on which river?", a: ["Jhelum", "Chenab", "Indus", "Ravi"], c: 0},
+{q: "Which 'Pass' connects Srinagar to Leh?", a: ["Zoji La", "Khardung La", "Nathu La", "Shipki La"], c: 0},
+{q: "The 'Siachen' conflict began in which year?", a: ["1984", "1999", "1971", "1965"], c: 0},
+{q: "Which 'Line' separates India and China?", a: ["LAC", "LoC", "Radcliffe Line", "Durand Line"], c: 0},
+{q: "The 'Radcliffe Line' separates India and?", a: ["Pakistan", "China", "Nepal", "Bhutan"], c: 0},
+{q: "Which 'State' was bifurcated into two UTs in 2019?", a: ["J&K", "Ladakh", "Punjab", "Himachal"], c: 0},
+{q: "The 'Chenab Bridge' is the world's highest what?", a: ["Rail Bridge", "Road Bridge", "Dam", "Tower"], c: 0},
+{q: "Which 'Tunnel' connects Manali to Leh?", a: ["Atal Tunnel", "Jawahar Tunnel", "Banihal Tunnel", "Z-Morh"], c: 0},
+{q: "The 'Daulat Beg Oldi' is famous for?", a: ["Highest Airstrip", "Largest Lake", "Deepest Valley", "Oldest Fort"], c: 0},
+{q: "Which 'Sector' is known as the 'Gateway to Ladakh'?", a: ["Dras", "Kargil", "Leh", "Nubra"], c: 0},
+{q: "The 'Tulbul Navigation Project' is related to?", a: ["Wular Lake", "Dal Lake", "Indus River", "Ravi River"], c: 0},
+{q: "Which 'City' is the winter capital of J&K?", a: ["Jammu", "Srinagar", "Leh", "Anantnag"], c: 0},
+{q: "The 'Mughal Road' connects Poonch to?", a: ["Shopian", "Jammu", "Srinagar", "Uri"], c: 0},
+{q: "Which 'Peak' is the highest in PoK?", a: ["K2", "Nanga Parbat", "Rakaposhi", "Tirich Mir"], c: 0},
+{q: "The 'Shaksgam Valley' was ceded by Pakistan to?", a: ["China", "India", "Afghanistan", "USA"], c: 0},
+{q: "Which 'Glacier' is the second longest non-polar glacier?", a: ["Siachen", "Baltoro", "Biafo", "Gangotri"], c: 0},
+{q: "The 'Nubra Valley' is accessed via?", a: ["Khardung La", "Zoji La", "Chang La", "Taglang La"], c: 0},
+{q: "Which 'Lake' is shared between India and China?", a: ["Pangong Tso", "Wular", "Dal", "Mansar"], c: 0},
+{q: "The 'Galwan Valley' clash occurred in?", a: ["2020", "2019", "2021", "2022"], c: 0},
+{q: "Which 'Agreement' followed the 1965 war?", a: ["Tashkent", "Simla", "Lahore", "Delhi"], c: 0},
+{q: "The 'Lahore Declaration' was signed in?", a: ["1999", "1998", "2000", "2001"], c: 0},
+{q: "Which 'Bus Service' was started in 1999?", a: ["Sada-e-Sarhad", "Samjhauta", "Dosti", "Maitri"], c: 0},
+{q: "The 'Thar Express' ran between?", a: ["Jodhpur-Karachi", "Delhi-Lahore", "Amritsar-Lahore", "Jaipur-Sindh"], c: 0},
+{q: "Which 'Border Post' is famous for the 'Beating Retreat'?", a: ["Wagah", "Hussainiwala", "Sadqi", "All of the above"], c: 3},
+{q: "Which 'Missile' is an Air-to-Air missile?", a: ["Astra", "Prithvi", "Agni", "Dhanush"], c: 0},
+{q: "The 'Tejas' is a __ generation fighter?", a: ["4th", "5th", "3rd", "6th"], c: 0},
+{q: "Which 'Tank' is the Main Battle Tank (MBT) of India?", a: ["Arjun", "Bhishma", "Ajeya", "Vijayanta"], c: 0},
+{q: "The 'INS Arihant' is powered by?", a: ["Nuclear", "Diesel-Electric", "Gas Turbine", "Solar"], c: 0},
+{q: "Which 'Destroyer' class is the newest?", a: ["Visakhapatnam", "Kolkata", "Delhi", "Rajput"], c: 0},
+{q: "The 'P-8I Neptune' is used for?", a: ["Anti-Submarine Warfare", "Fighter", "Transport", "Training"], c: 0},
+{q: "Which 'Drone' is a MALE (Medium Altitude Long Endurance)?", a: ["Rustom-2", "Heron", "Searcher", "Lakshya"], c: 0},
+{q: "The 'Nag' is an?", a: ["Anti-Tank Missile", "Anti-Ship Missile", "Air-to-Air Missile", "Ballistic Missile"], c: 0},
+{q: "Which 'System' is an Indigenous Aircraft Carrier?", a: ["IAC-1 (Vikrant)", "Vikramaditya", "Viraat", "Hermes"], c: 0},
+{q: "The 'AMCA' project stands for?", a: ["Advanced Medium Combat Aircraft", "Air Missile Combat Area", "Army Main Combat Asset", "None"], c: 0},
+{q: "Which 'Helicopter' is the 'Apache'?", a: ["AH-64E", "CH-47", "Mi-35", "LCH"], c: 0},
+{q: "The 'Chinook' is a?", a: ["Heavy Lift Helicopter", "Attack Helicopter", "Light Utility", "Drone"], c: 0},
+{q: "Which 'Gun' is the AK-203?", a: ["Assault Rifle", "Sniper", "Machine Gun", "Pistol"], c: 0},
+{q: "The 'S-400' range is up to?", a: ["400 km", "200 km", "100 km", "600 km"], c: 0},
+{q: "Which 'Radar' is indigenous?", a: ["Rajendra", "Green Pine", "Elta", "Thales"], c: 0},
+{q: "The 'Prithvi' missile is?", a: ["Surface-to-Surface", "Air-to-Air", "Surface-to-Air", "Air-to-Surface"], c: 0},
+{q: "Which 'Satellite' is for military communication?", a: ["GSAT-7A", "INSAT-4B", "GSAT-11", "Cartosat-2"], c: 0},
+{q: "The 'RISAT' series are?", a: ["Radar Imaging Satellites", "Remote Internet Satellites", "Radio India Satellites", "None"], c: 0},
+{q: "Which 'Organization' builds Indian submarines?", a: ["Mazagon Dock", "Garden Reach", "Cochin Shipyard", "Hindustan Shipyard"], c: 0},
+{q: "FINAL QUESTION: 'Jai Hind' means?", a: ["Victory to India", "Long Live India", "Salute India", "India First"], c: 0},
+{q: "Who was the first recipient of the Param Vir Chakra?", a: ["Major Somnath Sharma", "Captain Vikram Batra", "Subedar Yogendra Singh Yadav", "2nd Lt. Arun Khetarpal"], c: 0},
+{q: "Which is the highest peacetime gallantry award in India?", a: ["Ashok Chakra", "Kirti Chakra", "Shaurya Chakra", "Param Vishisht Seva Medal"], c: 0},
+{q: "Who was the first Field Marshal of the Indian Army?", a: ["K.M. Cariappa", "Sam Manekshaw", "Arjan Singh", "Bipin Rawat"], c: 1},
+{q: "The 'Flying Officer' rank in the Air Force is equivalent to which Army rank?", a: ["Lieutenant", "Captain", "Major", "Colonel"], c: 0},
+{q: "Captain Vikram Batra was awarded which medal posthumously?", a: ["Param Vir Chakra", "Maha Vir Chakra", "Vir Chakra", "Sena Medal"], c: 0},
+{q: "How many stars does a Field Marshal hold?", a: ["Five", "Four", "Three", "Two"], c: 0},
+{q: "Which rank is the highest in the Indian Navy?", a: ["Admiral", "Vice Admiral", "Rear Admiral", "Commodore"], c: 0},
+{q: "Wing Commander Abhinandan Varthaman was awarded which medal?", a: ["Vir Chakra", "Shaurya Chakra", "Kirti Chakra", "Vayu Sena Medal"], c: 0},
+{q: "Who is the only Marshal of the Indian Air Force?", a: ["Arjan Singh", "Subroto Mukerjee", "Aspy Engineer", "P.C. Lal"], c: 0},
+{q: "The 'Sena Medal' is awarded for?", a: ["Gallantry/Distinguished Service", "Long Service", "High Altitude Service", "Wounds"], c: 0},
+{q: "Which is the second highest wartime gallantry award?", a: ["Maha Vir Chakra", "Vir Chakra", "Ashok Chakra", "Kirti Chakra"], c: 0},
+{q: "What is the motto of the Indian Army?", a: ["Service Before Self", "Touch the Sky with Glory", "May the Lord of Water be Auspicious", "Valor and Wisdom"], c: 0},
+{q: "What is the motto of the Indian Air Force?", a: ["Nabhah Sprsham Diptam", "Sham No Varunah", "Seva Parmo Dharma", "Veerta Aur Vivek"], c: 0},
+{q: "What is the motto of the Indian Navy?", a: ["Sham No Varunah", "Satyameva Jayate", "Vande Mataram", "Jai Hind"], c: 0},
+{q: "Which medal is awarded for long service and good conduct?", a: ["9-Year Service Medal", "PVSM", "AVSM", "VSM"], c: 0},
+{q: "Who was the first Commander-in-Chief of the Indian Army post-independence?", a: ["K.M. Cariappa", "Rajendrasinhji", "Thimayya", "Chaudhuri"], c: 0},
+{q: "The 'Sword of Honour' is awarded in which academy?", a: ["IMA", "NDA", "OTA", "All of the above"], c: 3},
+{q: "Which regiment is known as the 'Bravest of the Brave'?", a: ["Punjab Regiment", "Sikh Regiment", "Gorkha Rifles", "Madras Regiment"], c: 0}, // Often attributed to Sikh/Gorkha, usually Sikh
+{q: "The rank of 'Subedar Major' exists in?", a: ["Army", "Navy", "Air Force", "Coast Guard"], c: 0},
+{q: "A 'Commodore' in the Navy is equivalent to which Army rank?", a: ["Brigadier", "Colonel", "Major General", "Lt. Colonel"], c: 0},
+{q: "Which award was created to honor the 1971 war victory?", a: ["Sangram Medal", "Paschimi Star", "Poorvi Star", "All of the above"], c: 3},
+{q: "The 'MacGregor Memorial Medal' is awarded for?", a: ["Military Reconnaissance/Exploration", "Bravery", "Shooting", "Sports"], c: 0},
+{q: "Which is the highest rank a JCO (Junior Commissioned Officer) can hold?", a: ["Subedar Major", "Subedar", "Naib Subedar", "Havildar"], c: 0},
+{q: "Who was the first woman to receive a gallantry award (Ashok Chakra)?", a: ["Neerja Bhanot", "Kiran Bedi", "Punita Arora", "Padmavathy Bandopadhyay"], c: 0},
+{q: "The President's Bodyguard (PBG) is the senior-most unit of?", a: ["Indian Army", "Delhi Police", "NSG", "CRPF"], c: 0},
+{q: "The Battle of Longewala took place in which war?", a: ["1971", "1965", "1999", "1962"], c: 0},
+{q: "Who was the Prime Minister of India during the Kargil War?", a: ["Atal Bihari Vajpayee", "Indira Gandhi", "Rajiv Gandhi", "Manmohan Singh"], c: 0},
+{q: "The 1962 war was fought between India and?", a: ["China", "Pakistan", "Portugal", "Nepal"], c: 0},
+{q: "Operation Vijay (1961) was launched to liberate?", a: ["Goa", "Hyderabad", "Kashmir", "Junagadh"], c: 0},
+{q: "The Tashkent Agreement was signed after which war?", a: ["1965", "1971", "1947", "1999"], c: 0},
+{q: "Which new nation was created after the 1971 war?", a: ["Bangladesh", "Myanmar", "Sri Lanka", "Bhutan"], c: 0},
+{q: "The Battle of Rezang La is famous for the bravery of?", a: ["Major Shaitan Singh", "Major Somnath Sharma", "Captain Bana Singh", "Lt. Arun Khetarpal"], c: 0},
+{q: "Operation Meghdoot (1984) secured which area?", a: ["Siachen Glacier", "Kargil", "Aksai Chin", "Tawang"], c: 0},
+{q: "Who signed the Instrument of Surrender in 1971?", a: ["Gen A.A.K. Niazi", "Gen Yahya Khan", "Gen Ayub Khan", "Gen Musharraf"], c: 0},
+{q: "The Battle of Asal Uttar (1965) involved a massive battle of?", a: ["Tanks", "Aircraft", "Ships", "Infantry"], c: 0},
+{q: "Which city is known as the 'Graveyard of Patton Tanks'?", a: ["Khem Karan", "Amritsar", "Pathankot", "Jaisalmer"], c: 0},
+{q: "Operation Cactus took place in which country?", a: ["Maldives", "Sri Lanka", "Nepal", "Bhutan"], c: 0},
+{q: "The IPKF was deployed in which country?", a: ["Sri Lanka", "Maldives", "Bangladesh", "Afghanistan"], c: 0},
+{q: "Who was the Defense Minister during the 1962 war?", a: ["V.K. Krishna Menon", "Y.B. Chavan", "Jagjivan Ram", "Sardar Patel"], c: 0},
+{q: "The 'Line of Actual Control' (LAC) refers to the border with?", a: ["China", "Pakistan", "Bangladesh", "Myanmar"], c: 0},
+{q: "The Battle of Tiger Hill was a turning point in which war?", a: ["Kargil (1999)", "1971", "1965", "1947"], c: 0},
+{q: "Which General led the Indian Army in 1971?", a: ["Sam Manekshaw", "K.M. Cariappa", "Sundarji", "V.P. Malik"], c: 0},
+{q: "The Shimla Agreement was signed between Indira Gandhi and?", a: ["Zulfikar Ali Bhutto", "Benazir Bhutto", "Nawaz Sharif", "Zia-ul-Haq"], c: 0},
+{q: "Operation Polo (1948) was conducted to integrate?", a: ["Hyderabad", "Kashmir", "Junagadh", "Goa"], c: 0},
+{q: "The 'Himalayan Blunder' book is about which war?", a: ["1962", "1947", "1999", "1971"], c: 0},
+{q: "Which Air Force base was crucial in the 1999 war?", a: ["Srinagar", "Ambala", "Adampur", "Halwara"], c: 0},
+{q: "Operation Safed Sagar refers to the role of?", a: ["Air Force in Kargil", "Navy in 1971", "Army in Siachen", "Coast Guard"], c: 0},
+{q: "Operation Talwar was the Naval operation in?", a: ["1999", "1971", "1965", "2001"], c: 0},
+{q: "The 'Standstill Agreement' related to which state?", a: ["Jammu & Kashmir", "Hyderabad", "Mysore", "Travancore"], c: 0},
+{q: "How many POWs (Prisoners of War) were taken in 1971?", a: ["93,000", "50,000", "10,000", "1,000"], c: 0},
+{q: "Where is the Indian Military Academy (IMA) located?", a: ["Dehradun", "Pune", "Chennai", "Gaya"], c: 0},
+{q: "Where is the National Defence Academy (NDA) located?", a: ["Khadakwasla (Pune)", "Dehradun", "Mhow", "Secunderabad"], c: 0},
+{q: "Where is the Headquarters of DRDO?", a: ["New Delhi", "Bengaluru", "Hyderabad", "Pune"], c: 0},
+{q: "What does HAL stand for?", a: ["Hindustan Aeronautics Limited", "Heavy Artillery Limited", "Hindustan Arms Limited", "High Altitude Lab"], c: 0},
+{q: "Which organization builds roads in border areas?", a: ["BRO (Border Roads Org)", "NHAI", "PWD", "CPWD"], c: 0},
+{q: "Where is the College of Combat (Army War College) located?", a: ["Mhow", "Pune", "Wellington", "Shimla"], c: 0},
+{q: "The 'High Altitude Warfare School' (HAWS) is in?", a: ["Gulmarg", "Leh", "Manali", "Siachen"], c: 0},
+{q: "Where is the Indian Naval Academy located?", a: ["Ezhimala", "Cochin", "Goa", "Mumbai"], c: 0},
+{q: "What does BEL stand for?", a: ["Bharat Electronics Limited", "Bombay Electricals Ltd", "Bharat Engineering Ltd", "Basic Electronics Lab"], c: 0},
+{q: "Where is the Satish Dhawan Space Centre?", a: ["Sriharikota", "Bengaluru", "Thumba", "Balasore"], c: 0},
+{q: "The 'Integrated Test Range' for missiles is in?", a: ["Chandipur (Odisha)", "Pokhran", "Sriharikota", "Thumba"], c: 0},
+{q: "Which city is known as the 'Science City' of India?", a: ["Bengaluru", "Hyderabad", "Pune", "Chennai"], c: 0},
+{q: "The 'Garden Reach Shipbuilders' are located in?", a: ["Kolkata", "Mumbai", "Goa", "Visakhapatnam"], c: 0},
+{q: "Where is the Air Force Academy located?", a: ["Dundigal (Hyderabad)", "Bengaluru", "Yelahanka", "Bidar"], c: 0},
+{q: "The 'Counter Insurgency and Jungle Warfare School' is in?", a: ["Vairengte (Mizoram)", "Siliguri", "Dimapur", "Shillong"], c: 0},
+{q: "Who is known as the 'Missile Man of India'?", a: ["APJ Abdul Kalam", "Homi Bhabha", "Vikram Sarabhai", "Satish Dhawan"], c: 0},
+{q: "What is the motto of the DRDO?", a: ["Balasya Mulam Vigyanam", "Service Before Self", "Jai Hind", "Vigyan Pragati"], c: 0},
+{q: "The 'Mazagon Dock' is in?", a: ["Mumbai", "Goa", "Kolkata", "Kochi"], c: 0},
+{q: "Which day is celebrated as 'Army Day'?", a: ["January 15", "October 8", "December 4", "July 26"], c: 0},
+{q: "Which day is celebrated as 'Navy Day'?", a: ["December 4", "January 15", "October 8", "February 1"], c: 0},
+{q: "Which day is celebrated as 'Air Force Day'?", a: ["October 8", "December 4", "January 15", "November 14"], c: 0},
+{q: "Where is the Southern Command of the Army?", a: ["Pune", "Jaipur", "Lucknow", "Kolkata"], c: 0},
+{q: "Where is the Training Command of the Air Force?", a: ["Bengaluru", "Nagpur", "Allahabad", "Shillong"], c: 0},
+{q: "The 'Officers Training Academy' (OTA) is in?", a: ["Chennai", "Dehradun", "Gaya", "Mhow"], c: 0},
+{q: "Which is the largest paramilitary force in India?", a: ["CRPF", "BSF", "CISF", "ITBP"], c: 0},
+{q: "Operation 'Smiling Buddha' (1974) was related to?", a: ["First Nuclear Test", "Kargil War", "Siachen Glacier", "Goa Liberation"], c: 0},
+{q: "Operation 'Shakti' (1998) refers to?", a: ["Pokhran-II Nuclear Tests", "1971 War", "Hyderabad Integration", "Air Strike"], c: 0},
+{q: "Operation 'Ganga' was launched to evacuate Indians from?", a: ["Ukraine", "Sudan", "Afghanistan", "Yemen"], c: 0},
+{q: "Operation 'Devi Shakti' evacuated Indians from?", a: ["Afghanistan", "Syria", "Iraq", "Libya"], c: 0},
+{q: "Operation 'Kaveri' (2023) was a rescue mission in?", a: ["Sudan", "Turkey", "Nepal", "Maldives"], c: 0},
+{q: "Operation 'Dost' provided aid to which earthquake-hit country?", a: ["Turkey & Syria", "Japan", "Nepal", "Indonesia"], c: 0},
+{q: "Operation 'Ajay' (2023) brought citizens back from?", a: ["Israel", "Gaza", "Iran", "Egypt"], c: 0},
+{q: "Exercise 'Malabar' involves India and which group?", a: ["The QUAD (USA, Japan, Aus)", "NATO", "ASEAN", "SAARC"], c: 0},
+{q: "Exercise 'Yudh Abhyas' is between India and?", a: ["USA", "UK", "Russia", "France"], c: 0},
+{q: "Exercise 'Surya Kiran' is conducted with?", a: ["Nepal", "Bhutan", "Sri Lanka", "Bangladesh"], c: 0},
+{q: "Exercise 'Mitra Shakti' is with?", a: ["Sri Lanka", "Thailand", "Myanmar", "Maldives"], c: 0},
+{q: "Exercise 'Sampriti' involves which neighbor?", a: ["Bangladesh", "Nepal", "Myanmar", "China"], c: 0},
+{q: "Exercise 'Indra' is a joint exercise with?", a: ["Russia", "France", "USA", "UK"], c: 0},
+{q: "Exercise 'Garuda' (Air Force) is with?", a: ["France", "Germany", "USA", "UAE"], c: 0},
+{q: "Exercise 'Varuna' (Navy) is with?", a: ["France", "UK", "Russia", "Japan"], c: 0},
+{q: "Exercise 'Vajra Prahar' involves Special Forces of India and?", a: ["USA", "Russia", "Israel", "UK"], c: 0},
+{q: "Operation 'Pawan' (1987) took place in?", a: ["Sri Lanka", "Maldives", "Bangladesh", "Siachen"], c: 0},
+{q: "Operation 'Blue Star' (1984) was conducted in?", a: ["Amritsar (Golden Temple)", "Delhi", "Mumbai", "Srinagar"], c: 0},
+{q: "Operation 'Black Tornado' was the NSG response to?", a: ["26/11 Mumbai Attacks", "Parliament Attack", "Pathankot Attack", "Uri Attack"], c: 0},
+{q: "Project '75' refers to the construction of?", a: ["Scorpene Submarines", "Aircraft Carriers", "Tanks", "Missiles"], c: 0},
+{q: "The 'INS Vikramaditya' was originally built by?", a: ["Russia (USSR)", "UK", "USA", "France"], c: 0},
+{q: "The 'INS Jalashwa' was acquired from?", a: ["USA", "Russia", "UK", "France"], c: 0},
+{q: "Who names the Cyclones in the Indian Ocean region?", a: ["WMO/ESCAP Panel (13 countries)", "USA", "India only", "UN Security Council"], c: 0},
+{q: "The 'Agni-V' missile is classified as?", a: ["ICBM (Intercontinental)", "SRBM", "Cruise Missile", "Anti-Tank"], c: 0},
+{q: "The 'K-15 Sagarika' is launched from?", a: ["Submarine", "Aircraft", "Tank", "Train"], c: 0},
+{q: "Which fighter jet is nicknamed 'Bahadur'?", a: ["MiG-27", "MiG-21", "Tejas", "Jaguar"], c: 0},
+{q: "The 'C-17 Globemaster' is a?", a: ["Strategic Transport Aircraft", "Fighter", "Bomber", "Trainer"], c: 0},
+{q: "The 'Chinook' helicopter is famous for?", a: ["Tandem Rotors (2 blades)", "Stealth", "Speed", "Water landing"], c: 0},
+{q: "The 'AH-64 Apache' is primarily used for?", a: ["Tank Hunting/Attack", "Transport", "VIP Travel", "Rescue"], c: 0},
+{q: "Final Question: 'Satyameva Jayate' is taken from?", a: ["Mundaka Upanishad", "Rig Veda", "Mahabharata", "Ramayana"], c: 0}
+
+
+
+];
+
+let currentIdx = 0;
+let score = 0;
+
+function loadQuestion() {
+    const q = quizData[currentIdx];
+    document.getElementById("current-count").innerText = currentIdx + 1;
+    document.getElementById("question").innerText = q.q;
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML = "";
+    document.getElementById("next-btn").style.display = "none";
+    
+    q.a.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.innerText = opt;
+        btn.onclick = () => checkAns(i, btn);
+        optionsDiv.appendChild(btn);
+    });
+}
+
+function checkAns(idx, btn) {
+    const correct = quizData[currentIdx].c;
+    const allBtns = document.querySelectorAll(".option-btn");
+    allBtns.forEach(b => b.disabled = true);
+    
+    if(idx === correct) {
+        btn.classList.add("correct");
+        score++;
+        document.getElementById("score").innerText = score;
+    } else {
+        btn.classList.add("wrong");
+        allBtns[correct].classList.add("correct");
+    }
+    document.getElementById("next-btn").style.display = "block";
+}
+
+function nextQuestion() {
+    currentIdx++;
+    if(currentIdx < quizData.length) {
+        loadQuestion();
+    } else {
+        document.getElementById("options").style.display = "none";
+        document.getElementById("question").style.display = "none";
+        document.getElementById("next-btn").style.display = "none";
+        document.getElementById("final-result").style.display = "block";
+        document.getElementById("total-score").innerText = score;
+    }
+}
+document.getElementById("total-count").innerText = quizData.length;
+loadQuestion();
+</script>
+</body>
+</html>
